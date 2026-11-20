@@ -1,0 +1,4 @@
+# scripts/plot.py
+matplotlib==3.11.0
+# model/make_water.py (only to rebuild the water polynomials)
+iapws==1.5.5

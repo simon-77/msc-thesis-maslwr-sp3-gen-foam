@@ -1,0 +1,26 @@
+FoamFile { version 2.0; format ascii; class dictionary; object turbulenceProperties; }
+
+// k-epsilon model of GeN-Foam for open water and porous zones; settings of its tutorial 2D_FFTF,
+// without DhStruct.
+// A run starts laminar (turbulenceProperties.start) and switches to this file after 100 s:
+// the turbulence model does not start from water at rest.
+
+simulationType RAS;
+
+RAS
+{
+    RASModel        porousKEpsilon;
+    turbulence      on;
+    printCoeffs     on;
+}
+
+porousKEpsilonProperties
+{
+    "core:sg:dc_up:dc_low"   // the porous zones
+    {
+        convergenceLength           0.1;
+        turbulenceIntensityCoeff    0.16;
+        turbulenceIntensityExp      -0.125;
+        turbulenceLengthScaleCoeff  0.07;
+    }
+}

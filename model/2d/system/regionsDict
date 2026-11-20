@@ -1,0 +1,21 @@
+FoamFile { version 2.0; format ascii; class dictionary; object regionsDict; }
+
+// One region, the water, solved with the single-phase thermal hydraulics of GeN-Foam.
+regionSolvers
+{
+    Level_0
+    {
+        fluid   onePhase;
+    }
+}
+
+meshDeformation
+{
+}
+
+mappings
+{
+    fluid
+    {
+    }
+}

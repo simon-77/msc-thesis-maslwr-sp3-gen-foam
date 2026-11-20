@@ -1,0 +1,40 @@
+FoamFile { version 2.0; format ascii; class dictionary; object thermophysicalProperties; }
+
+// Liquid water: density, heat capacity, viscosity and thermal conductivity as polynomials in
+// the temperature (IAPWS-IF97 at 8.718 MPa, file "water").
+
+#include "water"
+
+thermoType
+{
+    type            heRhoThermo;
+    mixture         pureMixture;
+    transport       polynomial;
+    thermo          hPolynomial;
+    equationOfState icoPolynomial;
+    specie          specie;
+    energy          sensibleEnthalpy;
+}
+
+mixture
+{
+    specie
+    {
+        molWeight   18.015;
+    }
+    equationOfState
+    {
+        rhoCoeffs<8>    $rhoCoeffs;
+    }
+    thermodynamics
+    {
+        Hf              0;
+        Sf              0;
+        CpCoeffs<8>     $CpCoeffs;
+    }
+    transport
+    {
+        muCoeffs<8>     $muCoeffs;
+        kappaCoeffs<8>  $kappaCoeffs;
+    }
+}

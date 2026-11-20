@@ -1,0 +1,5 @@
+FoamFile { version 2.0; format ascii; class dictionary; object turbulenceProperties; }
+
+// The first 100 s of a run (run.sh): no turbulence model.
+
+simulationType  laminar;

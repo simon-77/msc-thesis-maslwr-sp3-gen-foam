@@ -1,0 +1,88 @@
+// OSU-MASLWR primary loop, IAEA ICSP test SP-3: the numbers of the model.
+// Used by both cases (1d, 2d). The same values as in the MOOSE THM model of this loop, except
+// the wall friction law (here Blasius, there Churchill: the Churchill model of GeN-Foam cannot
+// add a form loss in the same zone).
+// Geometry: IAEA-TECDOC-1733, Tables 2-1 and 2-2.
+
+// --- Elevations [m] (Table 2-1) ---
+z_bot       -0.6238;   // core inlet
+z_core_top   0.0063;
+z_cone_bot   0.4255;   // cone: the riser narrows upwards between these two, and the downcomer
+z_cone_top   0.6701;   // around it widens
+z_sg_bot     1.5784;
+z_top        2.7272;   // top of the SG coil (1D: the loop is closed here)
+
+// --- Flow areas [m^2] (Table 2-1) ---
+A_core       84.22e-4;
+A_riser_low  304.81e-4;   // riser below the cone
+A_riser_up   82.13e-4;    // riser above the cone
+A_sg         411.43e-4;   // SG coil
+A_dc_up      567.51e-4;   // downcomer above the cone
+A_dc_low     345.83e-4;   // downcomer below the cone
+// Narrowest flow area between the SG tubes: the shell annulus (567.51 cm^2, as A_dc_up) minus
+// the three banks of tubes in a plane through the tube centres, pi x coil diameter x 15.9 mm.
+// Coil diameter D of a bank from Table 2-2: (pi D)^2 + (tubes x tube spacing)^2 =
+// (tube length / rotations)^2, so 146, 203 and 260 mm.
+A_bundle     263e-4;
+
+// --- Hydraulic diameters [m] (Table 2-1) ---
+Dh_core      0.00959;
+Dh_riser_low 0.19;
+Dh_riser_up  0.1022;
+Dh_sg        0.1289;      // shell walls only; the friction on the tubes is in K_bundle
+Dh_dc_up     0.1778;
+Dh_dc_low    0.0889;
+
+// --- Form losses K [-] ---
+// Constants from textbook formulas; a = small / large flow area (areas in cm^2).
+K_plate      4.04;   // flow plate below the core: entrance 0.5 plus expansion (1 - a)^2, on the
+                     // velocity in the holes; a = 37.61 / 84.22; on the core velocity: / a^2
+K_grid       1.54;   // grid wires, as a screen: 1.3 (1 - a) + (1 / a - 1)^2, a = 43.10 / 84.22
+// Rods in the lower plenum: the core rods (diameter d 15.9 mm, pitch 18.6 mm) run on down to
+// the vessel bottom, and the water flows inward between them before it rises into the core.
+// The rods stand in rows of 3, 5, 7, 9, 9, 9, 7, 5 and 3 (Fig. 2-3); the squares between four
+// rods form 40 cells. On its way in, the water passes the gaps on the outline of these cells, then
+// on the outline of the cells left inside, and so on: 32, 24, 16 and 8 gaps (2.7 mm wide,
+// 49.3 mm high, section 2.2.8) around 40, 24, 12 and 4 cells. The water that crosses an
+// outline is the share of the core flow area inside it, cells x (pitch^2 - pi d^2 / 4) / A_core:
+// 70, 42, 21 and 7 %. Each outline costs 0.55 velocity heads in its gaps (Idelchik 1996,
+// Eq. 12-14, one row of an in-line bank: 1.8 (pitch / d - 1)^-0.5 Re^-0.2 at Re 3e4), weighted
+// with that share. On the core velocity:
+// K_rods = sum of share x 0.55 x (share x A_core / gap area of the outline)^2.
+K_rods       1.11;
+K_core_out   0.524;  // expansion above the core: (1 - a)^2, a = 84.22 / 304.81
+K_flowmeter  0.298;  // contraction 0.5 (1 - a)^0.75 plus expansion (1 - a)^2, a = 65.65 / 82.13,
+                     // on the velocity in the flowmeter; on the riser velocity: / a^2
+K_riser_out  1.0;    // riser outlet into the upper plenum: the velocity head is lost (1D only;
+                     // in 2D the flow in the upper plenum is computed)
+K_bundle     9.2;    // SG tube bundle: 0.2 per row of tubes, 46 rows; on the velocity in A_bundle.
+// Per row: Gaddis (VDI Heat Atlas L1.4), in-line bank at Re 1e4, pitch along the flow the tube
+// spacing of Table 2-2, across it 28.6 mm (half the step between the coil diameters): 0.18,
+// 0.19 and 0.24 in the inner, middle and outer bank. Rows: tubes x rotations, 52, 47.5 and
+// 37.5; their mean.
+
+// --- Wall friction ---
+// Smooth wall, f = 0.316 Re^-0.25 (Blasius), from the local Reynolds number; SG shell: 0.02.
+// In the upper riser Re reaches 3e5, above the range of Blasius (f there 4 to 6 % low;
+// effect on the flow < 1 %).
+f_coeff      0.316;
+f_exp        -0.25;
+f_sg         0.02;
+
+// --- Steam generator (Table 2-2) ---
+// 14 tubes with 4.295 m^2 outer area, 13 of them in use. The inner surface of the tubes
+// is at T_sec (the boiling side adds no resistance).
+// Heat transfer coefficient: outside of the tubes 3630 W/(m^2 K) (Zukauskas, in-line bank,
+// Nu = 0.27 Re^0.63 Pr^0.36, at 2.2 kg/s and 490 K, Re on the velocity in A_bundle), tube
+// wall 8980 (1.65 mm of steel, 16.6 W/(m K)); together:
+U_sg         2590;                    // W/(m^2 K)
+A_tubes      #eval{ 4.295*13/14 };    // m^2
+
+// --- Start ---
+T_start      480;   // K, water at rest
+
+// --- Only in the 2D case (Table 2-1) ---
+D_vessel      0.2921;    // vessel bore [m]
+z_plenum_bot  -0.6858;   // bottom of the lower plenum
+z_riser_top   2.8705;    // top of the riser
+z_plenum_top  3.0798;    // top of the upper plenum (baffle plate of the pressuriser)

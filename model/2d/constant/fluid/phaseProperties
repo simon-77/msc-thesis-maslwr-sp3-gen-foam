@@ -1,0 +1,86 @@
+FoamFile { version 2.0; format ascii; class dictionary; object phaseProperties; }
+
+// The zones of the vessel: wall friction, form losses, heating and cooling.
+// The riser has its flow area from the mesh. The core, the SG coil and the downcomer are porous
+// zones: their cells are part water, part structure (rods, tubes; in the downcomer the riser
+// wall, which has no thickness in the mesh), so that each has its flow area of Table 2-1.
+// The two plena (lplen, uplen) are open water and need no entry.
+
+#include "$FOAM_CASE/constant/parameters"
+#include "$FOAM_CASE/constant/step"      // power and T_sec of this run, written by run.sh
+
+A_annulus     #eval{ pi()*sqr(0.5*$D_vessel) - $A_riser_up };    // downcomer of the mesh, above the cone [m^2]
+A_annulus_low #eval{ pi()*sqr(0.5*$D_vessel) - $A_riser_low };   // and below the cone
+L_core      #eval{ $z_core_top - $z_bot };
+L_riser_up  #eval{ $z_riser_top - $z_cone_top };
+L_sg        #eval{ $z_top - $z_sg_bot };
+
+// Smooth-wall friction (Blasius), used by the zones below
+blasius { type ReynoldsPower; coeff $f_coeff; exp $f_exp; }
+
+// --- Heating: the core power, uniform over the water in the core [W/m^3] ---
+fluidProperties
+{
+    initialPowerDensity
+    {
+        "core"  #eval{ $power/($A_core*$L_core) };
+    }
+}
+
+// --- Structure in each zone ---
+// volumeFraction is the part of a cell that is not open to the flow.
+structureProperties
+{
+    "core"      { volumeFraction #eval{ 1 - $A_core/$A_riser_low }; Dh $Dh_core; }
+    "riser_low" { volumeFraction 0;                                 Dh $Dh_riser_low; }
+    "riser_up"  { volumeFraction 0;                                 Dh $Dh_riser_up; }
+    "sg"
+    {
+        volumeFraction #eval{ 1 - $A_sg/$A_annulus };
+        Dh $Dh_sg;
+        // Cooling: the inner surface of the tubes is at T_sec. Tube area per volume of the zone [1/m]:
+        powerModel
+        {
+            type            fixedTemperature;
+            volumetricArea  #eval{ $A_tubes/($A_annulus*$L_sg) };
+            T               $T_sec;
+        }
+    }
+    "dc_up"     { volumeFraction #eval{ 1 - $A_dc_up/$A_annulus };      Dh $Dh_dc_up; }
+    // dc_low includes the cone, where the mesh area grows towards A_annulus
+    "dc_low"    { volumeFraction #eval{ 1 - $A_dc_low/$A_annulus_low }; Dh $Dh_dc_low; }
+}
+
+regimeMapModels
+{
+}
+
+physicsModels
+{
+    // --- Pressure losses ---
+    // Friction factor of a zone: f = coeff Re^exp + const. A form loss K is spread over the
+    // length L of its zone as the constant K Dh / L (then f L / Dh gives K).
+    // The loss at the riser outlet (K_riser_out) is not here: the flow in the upper plenum is
+    // computed.
+    dragModels
+    {
+        "core"      { $blasius; const #eval{ ($K_plate + $K_grid + $K_rods + $K_core_out)*$Dh_core/$L_core }; }
+        "riser_low" { $blasius; }
+        "riser_up"  { $blasius; const #eval{ $K_flowmeter*$Dh_riser_up/$L_riser_up }; }
+        // K_bundle is on the velocity in A_bundle; on the velocity in the SG zone: (A_sg / A_bundle)^2
+        "sg"        { type ReynoldsPower; coeff 0; exp 0;
+                      const #eval{ $f_sg + $K_bundle*pow($A_sg/$A_bundle, 2)*$Dh_sg/$L_sg }; }
+        "dc_up"     { $blasius; }
+        "dc_low"    { $blasius; }
+    }
+
+    // --- Heat transfer coefficient between the water and the SG tubes [W/(m^2 K)] ---
+    heatTransferModels
+    {
+        "sg" { type constant; value $U_sg; }
+    }
+
+    pairGeometryModels
+    {
+    }
+}

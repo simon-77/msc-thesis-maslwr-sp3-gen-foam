@@ -1,0 +1,57 @@
+FoamFile { version 2.0; format ascii; class dictionary; object fvSolution; }
+
+solvers
+{
+    "p_rgh.*"
+    {
+        solver          PBiCGStab;
+        preconditioner  DIC;
+        tolerance       1e-10;
+        relTol          0;
+    }
+    "h.*"
+    {
+        solver          smoothSolver;
+        smoother        symGaussSeidel;
+        tolerance       1e-10;
+        relTol          0;
+        minIter         1;
+    }
+}
+
+PIMPLE
+{
+    // Each time step is iterated until the residuals of pressure and enthalpy fall below 1e-6
+    // (at most 30 outer iterations).
+    nOuterCorrectors         30;
+    minNOuterCorrectors      2;
+    nCorrectors              4;
+    nNonOrthogonalCorrectors 0;
+    correctUntilConvergence  true;
+    residualControl
+    {
+        p_rgh { tolerance 1e-6; relTol 0; }
+        h     { tolerance 1e-6; relTol 0; }
+    }
+    solveEnergy              true;
+    solveFluidMechanics      true;
+    momentumPredictor        no;
+    // Porous zones: momentum on the cell faces, sharp change of the flow area between zones
+    momentumMode             faceCentered;
+    porousInterfaceSharpness 1;
+    minMagU                  0.0;
+    pMin                     1e4;
+    // Closed loop: the pressure is fixed in one cell. Its value does not enter the water properties.
+    pRefCell                 0;
+    pRefValue                1e5;
+}
+
+relaxationFactors   // none
+{
+    equations
+    {
+    }
+    fields
+    {
+    }
+}

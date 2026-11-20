@@ -1,0 +1,9 @@
+step,Q_nominal_kW,p_sec_MPa,mdot_kg_s,mdot_spread_kg_s,mdot_reading_kg_s,mdot_u_kg_s,dT_core_K,dT_core_spread_K,dT_core_reading_K,dT_core_u_K,source
+1,39.8,1.446,0.50,,,,12.0,,,,"TECDOC-1733 Table 4-3; flow oscillated (Table 3-8: 0.68 two-minute average, not steady; 0.48 step average); p_sec Table 3-8"
+2,79.6,1.44,0.9314,0.0204,0.0058,0.0212,15.33,0.46,0.50,0.68,plateau mean digitised from TECDOC-1733 Fig. 4-44 / 4-48 / 4-49; p_sec Table 3-10
+3,119.4,1.43,1.1880,0.0076,0.0058,0.0096,18.91,0.23,0.50,0.55,plateau mean digitised from TECDOC-1733 Fig. 4-44 / 4-48 / 4-49; p_sec Table 3-10
+4,159.2,1.43,1.3775,0.0095,0.0058,0.0111,22.02,0.16,0.50,0.52,plateau mean digitised from TECDOC-1733 Fig. 4-44 / 4-48 / 4-49; p_sec Table 3-10
+5,199.0,1.44,1.5065,0.0051,0.0058,0.0078,25.91,0.33,0.50,0.60,plateau mean digitised from TECDOC-1733 Fig. 4-44 / 4-48 / 4-49; p_sec Table 3-10
+6,238.8,1.44,1.6476,0.0090,0.0058,0.0107,28.84,0.30,0.50,0.58,plateau mean digitised from TECDOC-1733 Fig. 4-44 / 4-48 / 4-49; p_sec Table 3-10
+7,278.6,1.43,1.7809,0.0129,0.0058,0.0141,31.78,0.57,0.50,0.76,plateau mean digitised from TECDOC-1733 Fig. 4-44 / 4-48 / 4-49; p_sec Table 3-10
+8,318.4,1.43,1.8997,0.0064,0.0058,0.0087,34.15,1.10,0.50,1.21,"plateau mean digitised from TECDOC-1733 Fig. 4-44 / 4-48 / 4-49; p_sec not measured, step 7 value"

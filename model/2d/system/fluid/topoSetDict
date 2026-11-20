@@ -1,0 +1,15 @@
+FoamFile { version 2.0; format ascii; class dictionary; object topoSetDict; }
+
+// The faces at the core outlet, as a zone: the mass flow rate is measured there (system/controlDict).
+
+#include "$FOAM_CASE/constant/parameters"
+
+r_low   #eval{ sqrt($A_riser_low/pi()) };
+z_a     #eval{ $z_core_top - 1e-4 };
+z_b     #eval{ $z_core_top + 1e-4 };
+
+actions
+(
+    { name core_outlet; type faceSet; action new; source boxToFace; sourceInfo { box (-1 -1 $z_a) ($r_low 1 $z_b); } }
+    { name core_outlet; type faceZoneSet; action new; source setToFaceZone; sourceInfo { faceSet core_outlet; } }
+);

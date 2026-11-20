@@ -1,0 +1,15 @@
+FoamFile { version 2.0; format ascii; class volVectorField; object U; }
+
+dimensions      [0 1 -1 0 0 0 0];
+internalField   uniform (0 0 0);   // water at rest
+boundaryField
+{
+    wall
+    {
+        type            slip;   // wall friction is in the friction factors, not at the mesh walls
+    }
+    "riser_outlet|sg_inlet|downcomer_outlet|core_inlet"   // the two joints
+    {
+        type            cyclicAMI;
+    }
+}

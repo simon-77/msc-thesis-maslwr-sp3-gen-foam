@@ -1,0 +1,133 @@
+FoamFile { version 2.0; format ascii; class dictionary; object blockMeshDict; }
+
+// The vessel as a body of revolution: a wedge of 2 degrees around the axis (x = radius, z = height).
+//
+//        axis      wall       vessel
+//     8   +----------+----------+   z_plenum_top
+//         |      upper plenum   |
+//     7   +----------+----------+   z_riser_top
+//         | riser_up |  uplen   |
+//     6   +          +----------+   z_top
+//         |          |    sg    |
+//     5   +          +----------+   z_sg_bot
+//         |          |  dc_up   |
+//     4   +----------+----------+   z_cone_top
+//         |      cone: the wall moves outwards going down
+//     3   +----------+----------+   z_cone_bot
+//         | riser_low|  dc_low  |
+//     2   +----------+          +   z_core_top
+//         |   core   |          |
+//     1   +----------+----------+   z_bot
+//         |      lower plenum   |
+//     0   +----------+----------+   z_plenum_bot
+//
+// The riser wall has no thickness (no thin cells: shorter run time). At levels 2 to 6 the riser
+// and the downcomer have their own vertices on it (wi.., wo..), so their cells are not
+// connected between levels 1 and 7. The downcomer of the mesh is 4 % (above the cone) and 6 %
+// (below) wider than in Table 2-1; its zones have the area of Table 2-1 as a porosity
+// (constant/fluid/phaseProperties).
+
+#include "$FOAM_CASE/constant/parameters"
+
+// --- Radii [m] ---
+R       #eval{ 0.5*$D_vessel };
+r_low   #eval{ sqrt($A_riser_low/pi()) };   // wall below the cone
+r_up    #eval{ sqrt($A_riser_up/pi()) };    // wall above the cone
+
+// --- Cells ---
+cellsPerMetre 40;
+n_riser     8;    // across the riser (fixed)
+n_annulus   8;    // across the downcomer (fixed)
+n_01  6;          // lower plenum (0.062 m)
+n_12  #eval{ round($cellsPerMetre*($z_core_top - $z_bot)) };
+n_23  #eval{ round($cellsPerMetre*($z_cone_bot - $z_core_top)) };
+n_34  #eval{ round($cellsPerMetre*($z_cone_top - $z_cone_bot)) };
+n_45  #eval{ round($cellsPerMetre*($z_sg_bot - $z_cone_top)) };
+n_56  #eval{ round($cellsPerMetre*($z_top - $z_sg_bot)) };
+n_67  #eval{ round($cellsPerMetre*($z_riser_top - $z_top)) };
+n_78  #eval{ round($cellsPerMetre*($z_plenum_top - $z_riser_top)) };
+
+// --- Wedge: a point at radius r lies at x = r cos(1 deg), y = -/+ r sin(1 deg) ---
+c       #eval{ cos(degToRad(1)) };
+s       #eval{ sin(degToRad(1)) };
+xl #eval{ $r_low*$c };  yl #eval{ $r_low*$s };  ylm #eval{ -$r_low*$s };
+xu #eval{ $r_up*$c };   yu #eval{ $r_up*$s };   yum #eval{ -$r_up*$s };
+xR #eval{ $R*$c };      yR #eval{ $R*$s };      yRm #eval{ -$R*$s };
+
+scale 1;
+
+// Names: a = axis, w = wall (wi riser side, wo downcomer side), R = vessel; level 0-8;
+// m / p = the side of the wedge at -y / +y.
+vertices
+(
+    name a0 (0 0 $z_plenum_bot)  name w0m ($xl $ylm $z_plenum_bot)  name w0p ($xl $yl $z_plenum_bot)  name R0m ($xR $yRm $z_plenum_bot)  name R0p ($xR $yR $z_plenum_bot)
+    name a1 (0 0 $z_bot)  name w1m ($xl $ylm $z_bot)  name w1p ($xl $yl $z_bot)  name R1m ($xR $yRm $z_bot)  name R1p ($xR $yR $z_bot)
+    name a2 (0 0 $z_core_top)  name wi2m ($xl $ylm $z_core_top)  name wi2p ($xl $yl $z_core_top)  name wo2m ($xl $ylm $z_core_top)  name wo2p ($xl $yl $z_core_top)  name R2m ($xR $yRm $z_core_top)  name R2p ($xR $yR $z_core_top)
+    name a3 (0 0 $z_cone_bot)  name wi3m ($xl $ylm $z_cone_bot)  name wi3p ($xl $yl $z_cone_bot)  name wo3m ($xl $ylm $z_cone_bot)  name wo3p ($xl $yl $z_cone_bot)  name R3m ($xR $yRm $z_cone_bot)  name R3p ($xR $yR $z_cone_bot)
+    name a4 (0 0 $z_cone_top)  name wi4m ($xu $yum $z_cone_top)  name wi4p ($xu $yu $z_cone_top)  name wo4m ($xu $yum $z_cone_top)  name wo4p ($xu $yu $z_cone_top)  name R4m ($xR $yRm $z_cone_top)  name R4p ($xR $yR $z_cone_top)
+    name a5 (0 0 $z_sg_bot)  name wi5m ($xu $yum $z_sg_bot)  name wi5p ($xu $yu $z_sg_bot)  name wo5m ($xu $yum $z_sg_bot)  name wo5p ($xu $yu $z_sg_bot)  name R5m ($xR $yRm $z_sg_bot)  name R5p ($xR $yR $z_sg_bot)
+    name a6 (0 0 $z_top)  name wi6m ($xu $yum $z_top)  name wi6p ($xu $yu $z_top)  name wo6m ($xu $yum $z_top)  name wo6p ($xu $yu $z_top)  name R6m ($xR $yRm $z_top)  name R6p ($xR $yR $z_top)
+    name a7 (0 0 $z_riser_top)  name w7m ($xu $yum $z_riser_top)  name w7p ($xu $yu $z_riser_top)  name R7m ($xR $yRm $z_riser_top)  name R7p ($xR $yR $z_riser_top)
+    name a8 (0 0 $z_plenum_top)  name w8m ($xu $yum $z_plenum_top)  name w8p ($xu $yu $z_plenum_top)  name R8m ($xR $yRm $z_plenum_top)  name R8p ($xR $yR $z_plenum_top)
+);
+
+// One block per zone and row. Riser blocks touch the axis (the first and fourth vertex are the
+// same point), so their innermost cells are prisms.
+blocks
+(
+    hex (a0 w0m w0p a0 a1 w1m w1p a1) lplen     ($n_riser 1 $n_01) simpleGrading (1 1 1)
+    hex (w0m R0m R0p w0p w1m R1m R1p w1p) lplen     ($n_annulus 1 $n_01) simpleGrading (1 1 1)
+    hex (a1 w1m w1p a1 a2 wi2m wi2p a2) core      ($n_riser 1 $n_12) simpleGrading (1 1 1)
+    hex (w1m R1m R1p w1p wo2m R2m R2p wo2p) dc_low    ($n_annulus 1 $n_12) simpleGrading (1 1 1)
+    hex (a2 wi2m wi2p a2 a3 wi3m wi3p a3) riser_low ($n_riser 1 $n_23) simpleGrading (1 1 1)
+    hex (wo2m R2m R2p wo2p wo3m R3m R3p wo3p) dc_low    ($n_annulus 1 $n_23) simpleGrading (1 1 1)
+    hex (a3 wi3m wi3p a3 a4 wi4m wi4p a4) riser_low ($n_riser 1 $n_34) simpleGrading (1 1 1)
+    hex (wo3m R3m R3p wo3p wo4m R4m R4p wo4p) dc_low    ($n_annulus 1 $n_34) simpleGrading (1 1 1)
+    hex (a4 wi4m wi4p a4 a5 wi5m wi5p a5) riser_up  ($n_riser 1 $n_45) simpleGrading (1 1 1)
+    hex (wo4m R4m R4p wo4p wo5m R5m R5p wo5p) dc_up     ($n_annulus 1 $n_45) simpleGrading (1 1 1)
+    hex (a5 wi5m wi5p a5 a6 wi6m wi6p a6) riser_up  ($n_riser 1 $n_56) simpleGrading (1 1 1)
+    hex (wo5m R5m R5p wo5p wo6m R6m R6p wo6p) sg        ($n_annulus 1 $n_56) simpleGrading (1 1 1)
+    hex (a6 wi6m wi6p a6 a7 w7m w7p a7) riser_up  ($n_riser 1 $n_67) simpleGrading (1 1 1)
+    hex (wo6m R6m R6p wo6p w7m R7m R7p w7p) uplen     ($n_annulus 1 $n_67) simpleGrading (1 1 1)
+    hex (a7 w7m w7p a7 a8 w8m w8p a8) uplen     ($n_riser 1 $n_78) simpleGrading (1 1 1)
+    hex (w7m R7m R7p w7p w8m R8m R8p w8p) uplen     ($n_annulus 1 $n_78) simpleGrading (1 1 1)
+);
+
+edges ();
+
+// Every face not listed below is a wall: the vessel, the riser wall, top and bottom.
+defaultPatch { name wall; type wall; }
+
+boundary
+(
+    front
+    {
+        type wedge;
+        faces
+        (
+            (a0 w0m w1m a1)  (w0m R0m R1m w1m)
+            (a1 w1m wi2m a2)  (w1m R1m R2m wo2m)
+            (a2 wi2m wi3m a3)  (wo2m R2m R3m wo3m)
+            (a3 wi3m wi4m a4)  (wo3m R3m R4m wo4m)
+            (a4 wi4m wi5m a5)  (wo4m R4m R5m wo5m)
+            (a5 wi5m wi6m a6)  (wo5m R5m R6m wo6m)
+            (a6 wi6m w7m a7)  (wo6m R6m R7m w7m)
+            (a7 w7m w8m a8)  (w7m R7m R8m w8m)
+        );
+    }
+    back
+    {
+        type wedge;
+        faces
+        (
+            (a0 a1 w1p w0p)  (w0p w1p R1p R0p)
+            (a1 a2 wi2p w1p)  (w1p wo2p R2p R1p)
+            (a2 a3 wi3p wi2p)  (wo2p wo3p R3p R2p)
+            (a3 a4 wi4p wi3p)  (wo3p wo4p R4p R3p)
+            (a4 a5 wi5p wi4p)  (wo4p wo5p R5p R4p)
+            (a5 a6 wi6p wi5p)  (wo5p wo6p R6p R5p)
+            (a6 a7 w7p wi6p)  (wo6p w7p R7p R6p)
+            (a7 a8 w8p w7p)  (w7p w8p R8p R7p)
+        );
+    }
+);

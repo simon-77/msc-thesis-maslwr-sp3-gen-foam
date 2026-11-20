@@ -1,0 +1,19 @@
+cff-version: 1.2.0
+message: "Models from my MSc thesis, TU Wien (Atominstitut). If you use them, please cite them as below."
+title: "OSU-MASLWR SP-3 natural circulation: GeN-Foam models (1D and 2D)"
+type: software
+version: 1.0.0
+date-released: 2026-11-23
+authors:
+  - family-names: Aster
+    given-names: Simon
+    affiliation: "TU Wien, Atominstitut"
+license: GPL-3.0-or-later
+keywords:
+  - GeN-Foam
+  - OpenFOAM
+  - thermal hydraulics
+  - natural circulation
+  - OSU-MASLWR
+  - IAEA ICSP
+repository-code: "https://github.com/simon-77/msc-thesis-maslwr-sp3-gen-foam"

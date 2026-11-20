@@ -1,0 +1,16 @@
+FoamFile { version 2.0; format ascii; class volScalarField; object k; }
+
+dimensions      [0 2 -2 0 0 0 0];
+// Start value when the model is switched on (run.sh), as in the GeN-Foam tutorial 2D_FFTF.
+internalField   uniform 1;
+boundaryField
+{
+    wall
+    {
+        type            zeroGradient;
+    }
+    "front|back"   // the two sides of the wedge
+    {
+        type            wedge;
+    }
+}

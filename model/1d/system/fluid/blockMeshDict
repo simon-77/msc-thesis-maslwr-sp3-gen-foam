@@ -1,0 +1,80 @@
+FoamFile { version 2.0; format ascii; class dictionary; object blockMeshDict; }
+
+// Two vertical legs of one cell in cross-section, side by side:
+//
+//     hot leg (x = 0)        cold leg (x = 0.5)
+//     riser_up               sg            z_top
+//     riser_low              dc_up
+//     core                   dc_low        z_bot
+//
+// The legs are joined at the top and at the bottom (the two joints below). Both legs have the
+// cross-section of the widest part of the loop, A_dc_up; the flow area of each zone is set by
+// its volume fraction of structure in constant/fluid/phaseProperties.
+// The cone is one step at its mid-height, z_cone.
+
+#include "$FOAM_CASE/constant/parameters"
+
+z_cone  #eval{ 0.5*($z_cone_bot + $z_cone_top) };
+h       #eval{ 0.5*sqrt($A_dc_up) };   // half the side of the square cross-section
+xm      #eval{ -$h };
+xp      $h;
+x2m     #eval{ 0.5 - $h };
+x2p     #eval{ 0.5 + $h };
+
+// Cells per zone
+cellsPerMetre 80;
+n_core      #eval{ round($cellsPerMetre*($z_core_top - $z_bot)) };
+n_riser_low #eval{ round($cellsPerMetre*($z_cone - $z_core_top)) };
+n_riser_up  #eval{ round($cellsPerMetre*($z_top - $z_cone)) };
+n_sg        #eval{ round($cellsPerMetre*($z_top - $z_sg_bot)) };
+n_dc_up     #eval{ round($cellsPerMetre*($z_sg_bot - $z_cone)) };
+n_dc_low    #eval{ round($cellsPerMetre*($z_cone - $z_bot)) };
+
+scale 1;
+
+vertices
+(
+    // hot leg, bottom to top: 0-3, 4-7, 8-11, 12-15
+    ($xm $xm $z_bot)       ($xp $xm $z_bot)       ($xp $xp $z_bot)       ($xm $xp $z_bot)
+    ($xm $xm $z_core_top)  ($xp $xm $z_core_top)  ($xp $xp $z_core_top)  ($xm $xp $z_core_top)
+    ($xm $xm $z_cone)      ($xp $xm $z_cone)      ($xp $xp $z_cone)      ($xm $xp $z_cone)
+    ($xm $xm $z_top)       ($xp $xm $z_top)       ($xp $xp $z_top)       ($xm $xp $z_top)
+    // cold leg, top to bottom: 16-19, 20-23, 24-27, 28-31
+    ($x2p $xm $z_top)      ($x2m $xm $z_top)      ($x2m $xp $z_top)      ($x2p $xp $z_top)
+    ($x2p $xm $z_sg_bot)   ($x2m $xm $z_sg_bot)   ($x2m $xp $z_sg_bot)   ($x2p $xp $z_sg_bot)
+    ($x2p $xm $z_cone)     ($x2m $xm $z_cone)     ($x2m $xp $z_cone)     ($x2p $xp $z_cone)
+    ($x2p $xm $z_bot)      ($x2m $xm $z_bot)      ($x2m $xp $z_bot)      ($x2p $xp $z_bot)
+);
+
+// One block per zone, in flow order.
+blocks
+(
+    hex ( 0  1  2  3  4  5  6  7) core      (1 1 $n_core) simpleGrading (1 1 1)
+    hex ( 4  5  6  7  8  9 10 11) riser_low (1 1 $n_riser_low) simpleGrading (1 1 1)
+    hex ( 8  9 10 11 12 13 14 15) riser_up  (1 1 $n_riser_up) simpleGrading (1 1 1)
+    hex (16 17 18 19 20 21 22 23) sg        (1 1 $n_sg) simpleGrading (1 1 1)
+    hex (20 21 22 23 24 25 26 27) dc_up     (1 1 $n_dc_up) simpleGrading (1 1 1)
+    hex (24 25 26 27 28 29 30 31) dc_low    (1 1 $n_dc_low) simpleGrading (1 1 1)
+);
+
+edges ();
+
+defaultPatch { name wall; type wall; }
+
+// A joint turns the flow by 180 degrees: what leaves one leg enters the other at the same height.
+joint
+{
+    type            cyclicAMI;
+    transform       rotational;
+    rotationAxis    (0 1 0);
+    rotationAngle   180;
+    matchTolerance  0.1;
+}
+
+boundary
+(
+    riser_outlet { $joint; neighbourPatch sg_inlet;         rotationCentre (0.25 0 $z_top); faces ((12 13 14 15)); }
+    sg_inlet     { $joint; neighbourPatch riser_outlet;     rotationCentre (0.25 0 $z_top); faces ((16 17 18 19)); }
+    downcomer_outlet { $joint; neighbourPatch core_inlet;       rotationCentre (0.25 0 $z_bot); faces ((28 29 30 31)); }
+    core_inlet       { $joint; neighbourPatch downcomer_outlet; rotationCentre (0.25 0 $z_bot); faces ((0 1 2 3)); }
+);

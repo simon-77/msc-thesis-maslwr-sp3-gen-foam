@@ -1,0 +1,5 @@
+FoamFile { version 2.0; format ascii; class dictionary; object turbulenceProperties; }
+
+// No turbulence model: in 1D, wall friction and form losses are in the coefficients of the zones.
+
+simulationType  laminar;
